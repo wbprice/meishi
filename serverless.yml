@@ -5,6 +5,18 @@ frameworkVersion: ">=1.28.0 <2.0.0"
 provider:
   name: aws
   runtime: go1.x
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "logs:CreateLogGroup"
+        - "logs:CreateLogStream"
+        - "logs:PutLogEvents"
+        - "logs:DescribeLogStreams"
+      Resource:
+        - "arn:aws:logs:*:*:*"
+
+custom:
+  s3BucketName: "meishi-${self:provider.stage}-business-card-upload-bucket"
 
 package:
  exclude:
@@ -13,9 +25,9 @@ package:
    - ./bin/**
 
 functions:
-  hello:
-    handler: bin/hello
+  read-business-card:
+    handler: bin/read-business-card
     events:
-      - http:
-          path: hello
-          method: get
+      - s3:
+          bucket: ${self:custom.s3BucketName}
+          event: s3:ObjectCreated:*
