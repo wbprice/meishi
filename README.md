@@ -1,2 +1,2 @@
 # meishi
-A platform for scanning business cards
+A platform for collecting contact information from business cards
