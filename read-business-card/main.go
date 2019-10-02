@@ -29,10 +29,8 @@ func Handler(ctx context.Context, s3Event events.S3Event) {
 		// Begin to analyze the document.
 		extract_output, err := textract_client.AnalyzeDocument(
 			AnalyzeDocumentInput{
-				Document{
-					S3Object: record.S3.Object,
-				},
-				["FORMS"]
+				Document: Document{S3Object: record.S3.Object},
+				FeatureTypes: ["FORM"]
 			},
 		)
 
