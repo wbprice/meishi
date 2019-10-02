@@ -2,6 +2,9 @@ service: meishi
 
 frameworkVersion: ">=1.28.0 <2.0.0"
 
+custom:
+  s3BucketName: "meishi-${self:provider.stage}-business-card-upload-bucket"
+
 provider:
   name: aws
   runtime: go1.x
@@ -14,9 +17,8 @@ provider:
         - "logs:DescribeLogStreams"
       Resource:
         - "arn:aws:logs:*:*:*"
-
-custom:
-  s3BucketName: "meishi-${self:provider.stage}-business-card-upload-bucket"
+  environment:
+    S3_BUCKET_NAME: ${self:custom.s3BucketName}
 
 package:
  exclude:
