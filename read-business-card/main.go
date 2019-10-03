@@ -10,7 +10,6 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/textract"
 )
 
@@ -27,43 +26,33 @@ func handler(ctx context.Context, s3Event events.S3Event) {
 	// Configure the Textract client
 	textractClient := textract.New(session)
 
-	// Configure the S3 client
-	s3Client := s3.New(session)
-
 	// Iterate over file upload events
 	for i := 0; i < len(s3Event.Records); i++ {
 		record := s3Event.Records[i]
-		fmt.Println(record.EventName)
-		fmt.Println(record.S3.Object.Key)
-		fmt.Println(s3BucketName)
-
-		// Get file bytes
-		getObjectInput := &s3.GetObjectInput{
-			Bucket: aws.String(s3BucketName),
-			Key:    aws.String(record.S3.Object.Key),
-		}
-		blob, err := s3Client.GetObject(getObjectInput)
+		fmt.Printf("A %s event was heard.\n", record.EventName)
+		fmt.Printf("The file %s was placed in the bucket %s", record.S3.Object.Key, s3BucketName)
 
 		if err != nil {
 			fmt.Println("Something went wrong fetching the file")
 			log.Fatal(err)
 		}
 
-		blobBytes := []byte{}
-		blob.Body.Read(blobBytes)
-
-		document := textract.Document{
-			Bytes: blobBytes,
+		// Create an S3Object to use with texttract.Document
+		s3Object := textract.S3Object{
+			Bucket: aws.String(s3BucketName),
+			Name:   aws.String(record.S3.Object.Key),
 		}
-		featureTypes := aws.StringSlice([]string{"FORM"})
 
-		analyzeDocumentInput := textract.AnalyzeDocumentInput{
-			Document:     &document,
-			FeatureTypes: featureTypes,
+		// Create the input for the call to textractClient.DetectDocumentText
+		document := textract.Document{
+			S3Object: &s3Object,
+		}
+		detectDocumentTextInput := textract.DetectDocumentTextInput{
+			Document: &document,
 		}
 
 		// Begin to analyze the document.
-		extractOutput, err := textractClient.AnalyzeDocument(&analyzeDocumentInput)
+		extractOutput, err := textractClient.DetectDocumentText(&detectDocumentTextInput)
 
 		if err != nil {
 			log.Fatal(err)
