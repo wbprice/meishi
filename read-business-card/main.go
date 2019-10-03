@@ -38,33 +38,23 @@ func handler(ctx context.Context, s3Event events.S3Event) {
 		fmt.Println(s3BucketName)
 
 		// Get file bytes
-		blobInput := &s3.GetObjectInput{
+		getObjectInput := &s3.GetObjectInput{
 			Bucket: aws.String(s3BucketName),
 			Key:    aws.String(record.S3.Object.Key),
 		}
-
-		blob, err := s3Client.GetObject(blobInput)
+		blob, err := s3Client.GetObject(getObjectInput)
 
 		if err != nil {
 			fmt.Println("Something went wrong fetching the file")
 			log.Fatal(err)
-		} else {
-			fmt.Println("The blob")
-			fmt.Println(blob)
 		}
 
-		s3Object := textract.S3Object{
-			Bucket: &s3BucketName,
-			Name:   &record.S3.Object.Key,
-		}
+		blobBytes := []byte{}
+		blob.Body.Read(blobBytes)
+
 		document := textract.Document{
-			S3Object: &s3Object,
-			// Bytes:    []byte{},
+			Bytes: blobBytes,
 		}
-
-		fmt.Printf("Hello %s\n", *document.S3Object.Bucket)
-		fmt.Printf("I'm like %s\n", *document.S3Object.Name)
-
 		featureTypes := aws.StringSlice([]string{"FORM"})
 
 		analyzeDocumentInput := textract.AnalyzeDocumentInput{
