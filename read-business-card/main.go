@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -12,11 +13,12 @@ import (
 	"github.com/aws/aws-sdk-go/service/textract"
 )
 
-func Handler(ctx context.Context, s3Event events.S3Event) {
+func handler(ctx context.Context, s3Event events.S3Event) {
+	// Does the thing
 
 	session, err := session.NewSession()
 	if err != nil {
-		fmt.Printf("There was an error creating a session")
+		log.Fatal(err)
 	}
 
 	s3BucketName := os.Getenv("S3_BUCKET_NAME")
@@ -48,12 +50,14 @@ func Handler(ctx context.Context, s3Event events.S3Event) {
 		extractOutput, err := textractClient.AnalyzeDocument(&analyzeDocumentInput)
 
 		if err != nil {
-			fmt.Printf("There was an error parsing the document")
+			log.Fatal(err)
+		} else {
+			metadata := extractOutput.DocumentMetadata
+			fmt.Printf("%d pages were found", metadata.Pages)
 		}
 	}
-
 }
 
 func main() {
-	lambda.Start(Handler)
+	lambda.Start(handler)
 }
