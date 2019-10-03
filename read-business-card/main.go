@@ -38,7 +38,12 @@ func handler(ctx context.Context, s3Event events.S3Event) {
 		}
 		document := textract.Document{
 			S3Object: &s3Object,
+			Bytes:    []byte{},
 		}
+
+		fmt.Printf("Hello %s\n", *document.S3Object.Bucket)
+		fmt.Printf("I'm like %s\n", *document.S3Object.Name)
+
 		featureTypes := aws.StringSlice([]string{"FORM"})
 
 		analyzeDocumentInput := textract.AnalyzeDocumentInput{
