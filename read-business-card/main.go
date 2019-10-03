@@ -63,9 +63,7 @@ func handler(ctx context.Context, s3Event events.S3Event) {
 				fmt.Println("There was an issue formatting the response.")
 				log.Fatal(err)
 			}
-			fmt.Printf("%s", jsonBytes)
-			metadata := extractOutput.DocumentMetadata
-			fmt.Printf("%d pages were found", metadata.Pages)
+			fmt.Printf("%s/n", jsonBytes)
 		}
 	}
 }
