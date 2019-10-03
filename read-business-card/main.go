@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -30,7 +31,7 @@ func handler(ctx context.Context, s3Event events.S3Event) {
 	for i := 0; i < len(s3Event.Records); i++ {
 		record := s3Event.Records[i]
 		fmt.Printf("A %s event was heard.\n", record.EventName)
-		fmt.Printf("The file %s was placed in the bucket %s", record.S3.Object.Key, s3BucketName)
+		fmt.Printf("The file %s was placed in the bucket %s!", record.S3.Object.Key, s3BucketName)
 
 		if err != nil {
 			fmt.Println("Something went wrong fetching the file")
@@ -57,6 +58,12 @@ func handler(ctx context.Context, s3Event events.S3Event) {
 		if err != nil {
 			log.Fatal(err)
 		} else {
+			jsonBytes, err := json.MarshalIndent(extractOutput.GoString(), "", "    ")
+			if err != nil {
+				fmt.Println("There was an issue formatting the response.")
+				log.Fatal(err)
+			}
+			fmt.Printf("%s", jsonBytes)
 			metadata := extractOutput.DocumentMetadata
 			fmt.Printf("%d pages were found", metadata.Pages)
 		}
