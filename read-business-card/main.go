@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -13,6 +12,25 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/textract"
 )
+
+func analyzeS3ObjectWithTextract(client *textract.Textract, s3Object textract.S3Object) *textract.DetectDocumentTextOutput {
+	// Create the input for the call to textractClient.DetectDocumentText
+	document := textract.Document{
+		S3Object: &s3Object,
+	}
+	detectDocumentTextInput := textract.DetectDocumentTextInput{
+		Document: &document,
+	}
+
+	// Begin to analyze the document.
+	extractOutput, err := client.DetectDocumentText(&detectDocumentTextInput)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return extractOutput
+}
 
 func handler(ctx context.Context, s3Event events.S3Event) {
 	// Does the thing
@@ -33,38 +51,21 @@ func handler(ctx context.Context, s3Event events.S3Event) {
 		fmt.Printf("A %s event was heard.\n", record.EventName)
 		fmt.Printf("The file %s was placed in the bucket %s!", record.S3.Object.Key, s3BucketName)
 
-		if err != nil {
-			fmt.Println("Something went wrong fetching the file")
-			log.Fatal(err)
-		}
-
 		// Create an S3Object to use with texttract.Document
 		s3Object := textract.S3Object{
 			Bucket: aws.String(s3BucketName),
 			Name:   aws.String(record.S3.Object.Key),
 		}
 
-		// Create the input for the call to textractClient.DetectDocumentText
-		document := textract.Document{
-			S3Object: &s3Object,
-		}
-		detectDocumentTextInput := textract.DetectDocumentTextInput{
-			Document: &document,
-		}
+		// Get analysis of image from Textract.
+		documentOutput := analyzeS3ObjectWithTextract(textractClient, s3Object)
 
-		// Begin to analyze the document.
-		extractOutput, err := textractClient.DetectDocumentText(&detectDocumentTextInput)
+		// Get interesting lines of text from documentOutput
 
-		if err != nil {
-			log.Fatal(err)
-		} else {
-			jsonBytes, err := json.MarshalIndent(extractOutput.GoString(), "", "    ")
-			if err != nil {
-				fmt.Println("There was an issue formatting the response.")
-				log.Fatal(err)
-			}
-			fmt.Printf("%s/n", jsonBytes)
-		}
+		// Find out which tags were untagged
+
+		//
+
 	}
 }
 
