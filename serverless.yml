@@ -17,6 +17,17 @@ provider:
         - "logs:DescribeLogStreams"
       Resource:
         - "arn:aws:logs:*:*:*"
+    - Effect: "Allow"
+      Action:
+        - "textract:*"
+      Resource:
+        - "*"
+    - Effect: "Allow"
+      Action:
+        - s3:*
+      Resource:
+        - arn:aws:s3:::${self:custom.s3BucketName}
+        - arn:aws:s3:::${self:custom.s3BucketName}/*
   environment:
     S3_BUCKET_NAME: ${self:custom.s3BucketName}
 
