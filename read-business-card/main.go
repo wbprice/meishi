@@ -11,9 +11,28 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/textract"
+	"github.com/aws/aws-sdk-go/service/comprehend"
 )
 
-func analyzeS3ObjectWithTextract(client *textract.Textract, s3Object textract.S3Object) *textract.DetectDocumentTextOutput {
+func analyzeBusinessCardText(client *comprehend.Comprehend, text string) *comprehend.DetectEntitiesOutput {
+	// Packages text in a call to AWS Comprehend
+
+	languageCode := "en"
+	detectEntitiesInput := comprehend.DetectEntitiesInput {
+		LanguageCode: &languageCode,
+		Text: &text,
+	}
+
+	comprehendOutput, err := client.DetectEntities(&detectEntitiesInput)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return comprehendOutput
+}
+
+func getTextFromBusinessCard(client *textract.Textract, s3Object textract.S3Object) *textract.DetectDocumentTextOutput {
 	// Create the input for the call to textractClient.DetectDocumentText
 	document := textract.Document{
 		S3Object: &s3Object,
@@ -32,6 +51,19 @@ func analyzeS3ObjectWithTextract(client *textract.Textract, s3Object textract.S3
 	return extractOutput
 }
 
+func flattenTextFromTextractOutputBlocks(extractOutput textract.DetectDocumentTextOutput) *string {
+	output := ""
+	targetBlockType := "Line"
+	for i := 0; i < len(extractOutput.Blocks); i++ {
+		block := extractOutput.Blocks[i]
+
+		if block.BlockType == &targetBlockType {
+			output += *block.Text
+		}
+	}
+	return &output
+}
+
 func handler(ctx context.Context, s3Event events.S3Event) {
 	// Does the thing
 
@@ -42,8 +74,9 @@ func handler(ctx context.Context, s3Event events.S3Event) {
 
 	s3BucketName := os.Getenv("S3_BUCKET_NAME")
 
-	// Configure the Textract client
+	// Configure the Textract and Comprehend clients
 	textractClient := textract.New(session)
+	comprehendClient := comprehend.New(session)
 
 	// Iterate over file upload events
 	for i := 0; i < len(s3Event.Records); i++ {
@@ -58,14 +91,15 @@ func handler(ctx context.Context, s3Event events.S3Event) {
 		}
 
 		// Get analysis of image from Textract.
-		documentOutput := analyzeS3ObjectWithTextract(textractClient, s3Object)
+		documentOutput := getTextFromBusinessCard(textractClient, s3Object)
+		documentText := flattenTextFromTextractOutputBlocks(documentOutput)
 
 		// Get interesting lines of text from documentOutput
 
+
 		// Find out which tags were untagged
 
-		//
-
+		// 
 	}
 }
 
