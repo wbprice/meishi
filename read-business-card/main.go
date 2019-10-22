@@ -32,6 +32,14 @@ func analyzeBusinessCardText(client *comprehend.Comprehend, text *string) *compr
 	return comprehendOutput
 }
 
+func sortBusinessCardText(comprehendOutput *comprehend.DetectEntitiesOutput) {
+	for i := 0; i < len(comprehendOutput.Entities); i++ {
+		entity := comprehendOutput.Entities[i]
+		fmt.Printf("String: %s", entity.Text)
+		fmt.Printf("Type: %s", entity.Type)
+	}
+}
+
 func getTextFromBusinessCard(client *textract.Textract, s3Object textract.S3Object) *textract.DetectDocumentTextOutput {
 	// Create the input for the call to textractClient.DetectDocumentText
 	document := textract.Document{
@@ -96,9 +104,8 @@ func handler(ctx context.Context, s3Event events.S3Event) {
 
 		// Get interesting lines of text from documentOutput
 		interestingLines := analyzeBusinessCardText(comprehendClient, documentText)
-		// Find out which tags were untagged
-
-		//
+		// Look at each line
+		sortBusinessCardText(interestingLines)
 	}
 }
 
