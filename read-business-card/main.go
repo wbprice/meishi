@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/comprehend"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/textract"
 )
 
@@ -38,6 +39,10 @@ func sortBusinessCardText(comprehendOutput *comprehend.DetectEntitiesOutput) {
 		fmt.Printf("String: %s\n", *entity.Text)
 		fmt.Printf("Type: %s\n", *entity.Type)
 	}
+}
+
+func putRecordToTable(client *dynamodb.DynamoDB, comprehendOutput *comprehend.DetectEntitiesOutput, s3Object *textract.S3Object) {
+
 }
 
 func getTextFromBusinessCard(client *textract.Textract, s3Object textract.S3Object) *textract.DetectDocumentTextOutput {
@@ -81,9 +86,10 @@ func handler(ctx context.Context, s3Event events.S3Event) {
 
 	s3BucketName := os.Getenv("S3_BUCKET_NAME")
 
-	// Configure the Textract and Comprehend clients
+	// Configure various service clients
 	textractClient := textract.New(session)
 	comprehendClient := comprehend.New(session)
+	dynamoDbClient := dynamodb.New(session)
 
 	// Iterate over file upload events
 	for i := 0; i < len(s3Event.Records); i++ {
@@ -101,9 +107,11 @@ func handler(ctx context.Context, s3Event events.S3Event) {
 		documentText := flattenTextFromTextractOutputBlocks(documentOutput)
 
 		// Get interesting lines of text from documentOutput
-		interestingLines := analyzeBusinessCardText(comprehendClient, documentText)
+		comprehendOutput := analyzeBusinessCardText(comprehendClient, documentText)
 		// Look at each line
-		sortBusinessCardText(interestingLines)
+		sortBusinessCardText(comprehendOutput)
+		// Save record to table
+		putRecordToTable(dynamoDbClient, comprehendOutput)
 	}
 }
 
