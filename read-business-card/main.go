@@ -96,12 +96,9 @@ func handler(ctx context.Context, s3Event events.S3Event) {
 			Bucket: aws.String(s3BucketName),
 			Name:   aws.String(record.S3.Object.Key),
 		}
-		fmt.Printf("Get the text from the business card!\n")
 		// Get analysis of image from Textract.
 		documentOutput := getTextFromBusinessCard(textractClient, s3Object)
-		fmt.Printf("Flatten the text from the business card!\n")
 		documentText := flattenTextFromTextractOutputBlocks(documentOutput)
-		fmt.Printf("DocumentText: %s\n", *documentText)
 
 		// Get interesting lines of text from documentOutput
 		interestingLines := analyzeBusinessCardText(comprehendClient, documentText)
