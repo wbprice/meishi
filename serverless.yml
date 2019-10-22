@@ -3,6 +3,7 @@ service: meishi
 frameworkVersion: ">=1.28.0 <2.0.0"
 
 custom:
+  dynamodbTableName: "meishi-${self:provider.stage}-business-card-table"
   s3BucketName: "meishi-${self:provider.stage}-business-card-upload-bucket"
 
 provider:
@@ -31,6 +32,7 @@ provider:
         - arn:aws:s3:::${self:custom.s3BucketName}/*
   environment:
     S3_BUCKET_NAME: ${self:custom.s3BucketName}
+    DYNAMODB_TABLE_NAME: ${self:custom.dynamodbTableName}
 
 package:
  exclude:
@@ -45,3 +47,20 @@ functions:
       - s3:
           bucket: ${self:custom.s3BucketName}
           event: s3:ObjectCreated:*
+
+resources:
+  Resources:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: ${self:custom.dynamodbTableName}
+      AttributeDefinitions:
+        - 
+          AttributeName: name
+          AttributeType: S
+      KeySchema:
+        - 
+          AttributeName: name
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
