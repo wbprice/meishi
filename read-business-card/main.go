@@ -10,17 +10,17 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/textract"
 	"github.com/aws/aws-sdk-go/service/comprehend"
+	"github.com/aws/aws-sdk-go/service/textract"
 )
 
-func analyzeBusinessCardText(client *comprehend.Comprehend, text string) *comprehend.DetectEntitiesOutput {
+func analyzeBusinessCardText(client *comprehend.Comprehend, text *string) *comprehend.DetectEntitiesOutput {
 	// Packages text in a call to AWS Comprehend
 
 	languageCode := "en"
-	detectEntitiesInput := comprehend.DetectEntitiesInput {
+	detectEntitiesInput := comprehend.DetectEntitiesInput{
 		LanguageCode: &languageCode,
-		Text: &text,
+		Text:         text,
 	}
 
 	comprehendOutput, err := client.DetectEntities(&detectEntitiesInput)
@@ -51,7 +51,7 @@ func getTextFromBusinessCard(client *textract.Textract, s3Object textract.S3Obje
 	return extractOutput
 }
 
-func flattenTextFromTextractOutputBlocks(extractOutput textract.DetectDocumentTextOutput) *string {
+func flattenTextFromTextractOutputBlocks(extractOutput *textract.DetectDocumentTextOutput) *string {
 	output := ""
 	targetBlockType := "Line"
 	for i := 0; i < len(extractOutput.Blocks); i++ {
@@ -95,11 +95,10 @@ func handler(ctx context.Context, s3Event events.S3Event) {
 		documentText := flattenTextFromTextractOutputBlocks(documentOutput)
 
 		// Get interesting lines of text from documentOutput
-
-
+		interestingLines := analyzeBusinessCardText(comprehendClient, documentText)
 		// Find out which tags were untagged
 
-		// 
+		//
 	}
 }
 
