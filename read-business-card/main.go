@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/comprehend"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/textract"
 )
 
@@ -37,6 +38,41 @@ func sortBusinessCardText(comprehendOutput *comprehend.DetectEntitiesOutput) {
 		entity := comprehendOutput.Entities[i]
 		fmt.Printf("String: %s\n", *entity.Text)
 		fmt.Printf("Type: %s\n", *entity.Type)
+	}
+}
+
+func putRecordToTable(client *dynamodb.DynamoDB, comprehendOutput *comprehend.DetectEntitiesOutput, rawText string, prefix string) {
+
+	tableName := os.Getenv("DYNAMODB_TABLE_NAME")
+	inputMap := make(map[string]*dynamodb.AttributeValue)
+
+	for i := 0; i < len(comprehendOutput.Entities); i++ {
+		entity := comprehendOutput.Entities[i]
+		switch *entity.Type {
+		case "PERSON":
+			inputMap["name"] = &dynamodb.AttributeValue{
+				S: aws.String(*entity.Text),
+			}
+		case "LOCATION":
+			inputMap["address"] = &dynamodb.AttributeValue{
+				S: aws.String(*entity.Text),
+			}
+		default:
+			fmt.Println("Not a case comprehend understood")
+		}
+	}
+	inputMap["raw"] = &dynamodb.AttributeValue{
+		S: aws.String(rawText),
+	}
+	inputMap["imageLocation"] = &dynamodb.AttributeValue{
+		S: aws.String(prefix),
+	}
+
+	putItemInput := dynamodb.PutItemInput{Item: inputMap, TableName: &tableName}
+	_, err := client.PutItem(&putItemInput)
+
+	if err != nil {
+		log.Fatal(err)
 	}
 }
 
@@ -81,9 +117,10 @@ func handler(ctx context.Context, s3Event events.S3Event) {
 
 	s3BucketName := os.Getenv("S3_BUCKET_NAME")
 
-	// Configure the Textract and Comprehend clients
+	// Configure various service clients
 	textractClient := textract.New(session)
 	comprehendClient := comprehend.New(session)
+	dynamoDbClient := dynamodb.New(session)
 
 	// Iterate over file upload events
 	for i := 0; i < len(s3Event.Records); i++ {
@@ -101,9 +138,12 @@ func handler(ctx context.Context, s3Event events.S3Event) {
 		documentText := flattenTextFromTextractOutputBlocks(documentOutput)
 
 		// Get interesting lines of text from documentOutput
-		interestingLines := analyzeBusinessCardText(comprehendClient, documentText)
+		comprehendOutput := analyzeBusinessCardText(comprehendClient, documentText)
 		// Look at each line
-		sortBusinessCardText(interestingLines)
+		sortBusinessCardText(comprehendOutput)
+		// Save record to table
+		putRecordToTable(dynamoDbClient, comprehendOutput, *documentText, record.S3.Object.Key)
+		fmt.Printf("success!")
 	}
 }
 
