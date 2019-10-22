@@ -2,6 +2,9 @@ service: meishi
 
 frameworkVersion: ">=1.28.0 <2.0.0"
 
+plugins:
+  - serverless-pseudo-parameters
+
 custom:
   dynamodbTableName: "meishi-${self:provider.stage}-business-card-table"
   s3BucketName: "meishi-${self:provider.stage}-business-card-upload-bucket"
@@ -28,7 +31,7 @@ provider:
       Action:
         - dynamodb:PutItem
       Resource:
-        - arn:aws:dynamodb:::table/${self:custom.dynamodbTableName}
+        - arn:aws:dynamodb:#{AWS::Region}:#{AWS::AccountId}:table/${self:custom.dynamodbTableName}
     - Effect: "Allow"
       Action:
         - s3:*
