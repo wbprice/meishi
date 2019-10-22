@@ -61,15 +61,11 @@ func getTextFromBusinessCard(client *textract.Textract, s3Object textract.S3Obje
 
 func flattenTextFromTextractOutputBlocks(extractOutput *textract.DetectDocumentTextOutput) *string {
 	output := ""
-	targetBlockType := "LINE"
 	for i := 0; i < len(extractOutput.Blocks); i++ {
 		block := extractOutput.Blocks[i]
 
-		fmt.Printf("The block type: %s\n", *block.BlockType)
-
-		if *block.BlockType == targetBlockType {
-			fmt.Printf("The block text: %s\n", *block.Text)
-			output += *block.Text
+		if *block.BlockType == "LINE" {
+			output += *block.Text + "\n"
 		}
 	}
 	return &output
