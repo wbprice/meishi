@@ -26,6 +26,11 @@ provider:
         - "*"
     - Effect: "Allow"
       Action:
+        - dynamodb:PutItem
+      Resource:
+        - arn:aws:dynamodb:::table/${self:custom.dynamodbTableName}
+    - Effect: "Allow"
+      Action:
         - s3:*
       Resource:
         - arn:aws:s3:::${self:custom.s3BucketName}
@@ -50,17 +55,17 @@ functions:
 
 resources:
   Resources:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      TableName: ${self:custom.dynamodbTableName}
-      AttributeDefinitions:
-        - 
-          AttributeName: name
-          AttributeType: S
-      KeySchema:
-        - 
-          AttributeName: name
-          KeyType: HASH
-      ProvisionedThroughput:
-        ReadCapacityUnits: 5
-        WriteCapacityUnits: 5
+
+    DynamoDBTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.dynamodbTableName}
+        AttributeDefinitions:
+          - AttributeName: name
+            AttributeType: S
+        KeySchema:
+          - AttributeName: name
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
