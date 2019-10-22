@@ -43,6 +43,7 @@ func sortBusinessCardText(comprehendOutput *comprehend.DetectEntitiesOutput) {
 
 func putRecordToTable(client *dynamodb.DynamoDB, comprehendOutput *comprehend.DetectEntitiesOutput, rawText string, prefix string) {
 
+	tableName := os.Getenv("DYNAMODB_TABLE_NAME")
 	inputMap := make(map[string]*dynamodb.AttributeValue)
 
 	for i := 0; i < len(comprehendOutput.Entities); i++ {
@@ -67,7 +68,7 @@ func putRecordToTable(client *dynamodb.DynamoDB, comprehendOutput *comprehend.De
 		S: aws.String(prefix),
 	}
 
-	putItemInput := dynamodb.PutItemInput{Item: inputMap}
+	putItemInput := dynamodb.PutItemInput{Item: inputMap, TableName: &tableName}
 	_, err := client.PutItem(&putItemInput)
 
 	if err != nil {
