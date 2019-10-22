@@ -19,6 +19,7 @@ provider:
         - "arn:aws:logs:*:*:*"
     - Effect: "Allow"
       Action:
+        - "comprehend:DetectEntities"
         - "textract:*"
       Resource:
         - "*"

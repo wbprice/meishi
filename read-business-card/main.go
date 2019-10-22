@@ -35,8 +35,8 @@ func analyzeBusinessCardText(client *comprehend.Comprehend, text *string) *compr
 func sortBusinessCardText(comprehendOutput *comprehend.DetectEntitiesOutput) {
 	for i := 0; i < len(comprehendOutput.Entities); i++ {
 		entity := comprehendOutput.Entities[i]
-		fmt.Printf("String: %s", *entity.Text)
-		fmt.Printf("Type: %s", *entity.Type)
+		fmt.Printf("String: %s\n", *entity.Text)
+		fmt.Printf("Type: %s\n", *entity.Type)
 	}
 }
 
