@@ -10,8 +10,8 @@ custom:
   businessCardS3BucketName: "meishi-${self:provider.stage}-business-card-upload-bucket"
   trainingDataInputS3BucketName: "meishi-${self:provider.stage}-training-data-input-bucket"
   trainingDataOutputS3BucketName: "meishi-${self:provider.stage}-training-data-output-bucket"
-  trainingDataIAMRoleName: "meishi-${self:provider.stage"}-training-data-iam-role"
-  trainingDataIAMPolicyName: "meishi-${self:provider.stage"}-training-data-iam-role"
+  trainingDataIAMRoleName: "meishi-${self:provider.stage}-training-data-iam-role"
+  trainingDataIAMPolicyName: "meishi-${self:provider.stage}-training-data-iam-role"
 
 provider:
   name: aws
@@ -40,10 +40,10 @@ provider:
       Action:
         - s3:*
       Resource:
-        - arn:aws:s3:::${self:custom.s3BucketName}
-        - arn:aws:s3:::${self:custom.s3BucketName}/*
+        - arn:aws:s3:::${self:custom.businessCardS3BucketName}
+        - arn:aws:s3:::${self:custom.businessCardS3BucketName}/*
   environment:
-    S3_BUCKET_NAME: ${self:custom.s3BucketName}
+    S3_BUCKET_NAME: ${self:custom.businessCardS3BucketName}
     DYNAMODB_TABLE_NAME: ${self:custom.dynamodbTableName}
 
 package:
@@ -99,17 +99,17 @@ resources:
                   Action:
                     - s3:GetObject
                   Resource:
-                    - arn:aws:s3:::${self:custom.trainingDataInputS3BucketName}
+                    - arn:aws:s3:::${self:custom.trainingDataInputS3BucketName}/*
                 - Effect: "Allow"
                   Action:
                     - s3:ListBucket
                   Resource:
-                    - arn:aws:s3:::${self:custom.trainingDataInputS3BucketName}/*
+                    - arn:aws:s3:::${self:custom.trainingDataInputS3BucketName}
                 - Effect: "Allow"
                   Action:
                     - s3:PutObject
                   Resource:
-                    - arn:aws:s3:::${self:custom.trainingDataOutputS3BucketName}
+                    - arn:aws:s3:::${self:custom.trainingDataOutputS3BucketName}/*
 
     TrainingDataBucketInput:
       Type: AWS::S3::Bucket
