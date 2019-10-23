@@ -43,8 +43,10 @@ provider:
       Action:
         - s3:*
       Resource:
-        - arn:aws:s3:::${self:custom.businessCardS3BucketName}
-        - arn:aws:s3:::${self:custom.businessCardS3BucketName}/*
+        - arn:aws:s3:::${self:custom.businessCardImageS3BucketName}
+        - arn:aws:s3:::${self:custom.businessCardImageS3BucketName}/*
+        - arn:aws:s3:::${self:custom.businessCardTextS3BucketName}
+        - arn:aws:s3:::${self:custom.businessCardTextS3BucketName}/*
   environment:
     BUSINESS_CARD_IMAGE_S3_BUCKET_NAME: ${self:custom.businessCardImageS3BucketName}
     BUSINESS_CARD_TEXT_S3_BUCKET_NAME: ${self:custom.businessCardTextS3BucketName}
@@ -61,7 +63,7 @@ functions:
     handler: bin/read-business-card
     events:
       - s3:
-          bucket: ${self:custom.businessCardS3BucketName}
+          bucket: ${self:custom.businessCardImageS3BucketName}
           event: s3:ObjectCreated:*
 
   interpret-business-card:
@@ -75,7 +77,7 @@ functions:
     handler: bin/save-business-card-output
     events:
       - s3:
-          bucket: ${self:custom.businessCardTextS3BucketName}
+          bucket: ${self:custom.businessCardClassifierOutputS3BucketName}
 
 resources:
   Resources:
