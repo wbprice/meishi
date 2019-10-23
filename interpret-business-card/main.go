@@ -13,6 +13,24 @@ import (
 	"github.com/aws/aws-sdk-go/service/comprehend"
 )
 
+func analyzeBusinessCardText(client *comprehend.Comprehend, text *string) *comprehend.DetectEntitiesOutput {
+	// Packages text in a call to AWS Comprehend
+
+	languageCode := "en"
+	detectEntitiesInput := comprehend.DetectEntitiesInput{
+		LanguageCode: &languageCode,
+		Text:         text,
+	}
+
+	comprehendOutput, err := client.DetectEntities(&detectEntitiesInput)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return comprehendOutput
+}
+
 func handler(ctx context.Context, s3Event events.S3Event) {
 	session, err := session.NewSession()
 	if err != nil {
