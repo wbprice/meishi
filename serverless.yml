@@ -13,6 +13,8 @@ custom:
   trainingDataS3BucketName: "meishi-${self:provider.stage}-training-data-bucket"
   trainingDataIAMRoleName: "meishi-${self:provider.stage}-training-data-iam-role"
   trainingDataIAMPolicyName: "meishi-${self:provider.stage}-training-data-iam-role"
+  comprehendClassifierRoleName: ${self:service}-${self:provider.stage}-comprehend-classifier-role
+  comprehendClassifierPolicyName: ${self:service}-${self:provider.stage}-comprehend-classifier-policy
 
 provider:
   name: aws
@@ -92,6 +94,40 @@ resources:
           ReadCapacityUnits: 5
           WriteCapacityUnits: 5
 
+    ComprehendClassifierRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: "${self:custom.comprehendClassifierRoleName}"
+        Description: "A role for working with files in the client SFTP upload S3 bucket"
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: "Allow"
+              Action: "sts:AssumeRole"
+              Principal:
+                Service: "comprehend.amazonaws.com"
+        Policies:
+          -
+            PolicyName: "${self:custom.comprehendClassifierPolicyName}"
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - Effect: "Allow"
+                  Action:
+                    - s3:GetObject
+                  Resource:
+                    - arn:aws:s3:::${self:custom.businessCardTextS3BucketName}/*
+                - Effect: "Allow"
+                  Action:
+                    - s3:ListBucket
+                  Resource:
+                    - arn:aws:s3:::${self:custom.businessCardTextS3BucketName}
+                - Effect: "Allow"
+                  Action:
+                    - s3:PutObject
+                  Resource:
+                    - arn:aws:s3:::${self:custom.businessCardClassifierOutputS3BucketName}
+
     TrainingDataIamRole:
       Type: AWS::IAM::Role
       Properties:
@@ -115,16 +151,11 @@ resources:
                     - s3:GetObject
                   Resource:
                     - arn:aws:s3:::${self:custom.trainingDataS3BucketName}/*
-                    - arn:aws:s3:::${self:custom.businessCardS3BucketName}/*
-                    - arn:aws:s3:::${self:custom.businessCardTextS3BucketName}/*
-                    - arn:aws:s3:::${self:custom.businessCardTextS3BucketName}/*
                 - Effect: "Allow"
                   Action:
                     - s3:PutObject
                     - s3:ListBucket
                   Resource:
-                    - arn:aws:s3:::${self:custom.trainingDataS3BucketName}
-                    - arn:aws:s3:::${self:custom.trainingDataS3BucketName}
                     - arn:aws:s3:::${self:custom.trainingDataS3BucketName}
 
     TrainingDataBucket:
