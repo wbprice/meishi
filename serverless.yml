@@ -7,7 +7,11 @@ plugins:
 
 custom:
   dynamodbTableName: "meishi-${self:provider.stage}-business-card-table"
-  s3BucketName: "meishi-${self:provider.stage}-business-card-upload-bucket"
+  businessCardS3BucketName: "meishi-${self:provider.stage}-business-card-upload-bucket"
+  trainingDataInputS3BucketName: "meishi-${self:provider.stage}-training-data-input-bucket"
+  trainingDataOutputS3BucketName: "meishi-${self:provider.stage}-training-data-output-bucket"
+  trainingDataIAMRoleName: "meishi-${self:provider.stage"}-training-data-iam-role"
+  trainingDataIAMPolicyName: "meishi-${self:provider.stage"}-training-data-iam-role"
 
 provider:
   name: aws
@@ -53,7 +57,7 @@ functions:
     handler: bin/read-business-card
     events:
       - s3:
-          bucket: ${self:custom.s3BucketName}
+          bucket: ${self:custom.businessCardS3BucketName}
           event: s3:ObjectCreated:*
 
 resources:
@@ -72,3 +76,47 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 5
           WriteCapacityUnits: 5
+
+    TrainingDataIamRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: "${self:custom.trainingDataIAMRoleName}"
+        Description: "A role for working with files in the client SFTP upload S3 bucket"
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: "Allow"
+              Action: "sts:AssumeRole"
+              Principal:
+                Service: "comprehend.amazonaws.com"
+        Policies:
+          -
+            PolicyName: "${self:custom.trainingDataIAMPolicyName}"
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - Effect: "Allow"
+                  Action:
+                    - s3:GetObject
+                  Resource:
+                    - arn:aws:s3:::${self:custom.trainingDataInputS3BucketName}
+                - Effect: "Allow"
+                  Action:
+                    - s3:ListBucket
+                  Resource:
+                    - arn:aws:s3:::${self:custom.trainingDataInputS3BucketName}/*
+                - Effect: "Allow"
+                  Action:
+                    - s3:PutObject
+                  Resource:
+                    - arn:aws:s3:::${self:custom.trainingDataOutputS3BucketName}
+
+    TrainingDataBucketInput:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.trainingDataInputS3BucketName}
+
+    TrainingDataBucketOutput:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.trainingDataOutputS3BucketName}
