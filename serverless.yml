@@ -9,6 +9,7 @@ custom:
   dynamodbTableName: "meishi-${self:provider.stage}-business-card-table"
   businessCardImageS3BucketName: "meishi-${self:provider.stage}-business-card-upload-bucket"
   businessCardTextS3BucketName: "meishi-${self:provider.stage}-business-card-text-bucket"
+  businessCardClassifierOutputS3BucketName: "meishi-${self:provider.stage}-business-card-classifier-output-bucket"
   trainingDataS3BucketName: "meishi-${self:provider.stage}-training-data-bucket"
   trainingDataIAMRoleName: "meishi-${self:provider.stage}-training-data-iam-role"
   trainingDataIAMPolicyName: "meishi-${self:provider.stage}-training-data-iam-role"
@@ -68,6 +69,12 @@ functions:
           bucket: ${self:custom.businessCardTextS3BucketName}
           event: s3:ObjectCreated:*
 
+  save-business-card-output:
+    handler: bin/save-business-card-output
+    events:
+      - s3:
+          bucket: ${self:custom.businessCardTextS3BucketName}
+
 resources:
   Resources:
 
@@ -107,19 +114,20 @@ resources:
                   Action:
                     - s3:GetObject
                   Resource:
-                    - arn:aws:s3:::${self:custom.trainingDataInputS3BucketName}/*
-                - Effect: "Allow"
-                  Action:
-                    - s3:ListBucket
-                  Resource:
-                    - arn:aws:s3:::${self:custom.trainingDataInputS3BucketName}
+                    - arn:aws:s3:::${self:custom.trainingDataS3BucketName}/*
+                    - arn:aws:s3:::${self:custom.businessCardS3BucketName}/*
+                    - arn:aws:s3:::${self:custom.businessCardTextS3BucketName}/*
+                    - arn:aws:s3:::${self:custom.businessCardTextS3BucketName}/*
                 - Effect: "Allow"
                   Action:
                     - s3:PutObject
+                    - s3:ListBucket
                   Resource:
-                    - arn:aws:s3:::${self:custom.trainingDataOutputS3BucketName}/*
+                    - arn:aws:s3:::${self:custom.trainingDataS3BucketName}
+                    - arn:aws:s3:::${self:custom.trainingDataS3BucketName}
+                    - arn:aws:s3:::${self:custom.trainingDataS3BucketName}
 
     TrainingDataBucket:
       Type: AWS::S3::Bucket
       Properties:
-        BucketName: ${self:custom.trainingDataInputS3BucketName}
+        BucketName: ${self:custom.trainingDataS3BucketName}
