@@ -58,10 +58,15 @@ func handler(ctx context.Context, s3Event events.S3Event) {
 			S3Uri:       &filePrefix,
 		}
 
+		outputDataConfig := comprehend.OutputDataConfig {
+			S3Uri: &filePrefix,
+		}
+
 		documentClassificationRequestInput := comprehend.StartDocumentClassificationJobInput{
 			DataAccessRoleArn: 
 			DocumentClassifierArn:
 			InputDataConfig: &inputDataConfig,
+			OutputDataConfig: &outputDataConfig,
 		}
 	}
 }
