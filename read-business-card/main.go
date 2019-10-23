@@ -7,6 +7,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -49,11 +51,12 @@ func flattenTextFromTextractOutputBlocks(extractOutput *textract.DetectDocumentT
 
 func putTextToS3(client *s3.S3, key *string, text *string) {
 	buffer := []byte(*text)
+	prefix := strings.TrimSuffix(*key, filepath.Ext(*key))
 	businessCardTextS3BucketName := os.Getenv("BUSINESS_CARD_TEXT_S3_BUCKET_NAME")
 
 	putObjectInput := s3.PutObjectInput{
 		Bucket:             &businessCardTextS3BucketName,
-		Key:                key,
+		Key:                &prefix,
 		Body:               bytes.NewReader(buffer),
 		ContentLength:      aws.Int64(int64(len(buffer))),
 		ContentType:        aws.String(http.DetectContentType(buffer)),
@@ -95,8 +98,8 @@ func handler(ctx context.Context, s3Event events.S3Event) {
 		// Get analysis of image from Textract.
 		documentOutput := getTextFromBusinessCard(textractClient, s3Object)
 		documentText := flattenTextFromTextractOutputBlocks(documentOutput)
-
 		// Save document text to a CSV in the destination bucket
+
 		putTextToS3(s3Client, &record.S3.Object.Key, documentText)
 	}
 }
