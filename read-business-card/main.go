@@ -115,7 +115,7 @@ func handler(ctx context.Context, s3Event events.S3Event) {
 		log.Fatal(err)
 	}
 
-	s3BucketName := os.Getenv("S3_BUCKET_NAME")
+	s3BucketName := os.Getenv("BUSINESS_CARD_IMAGE_S3_BUCKET_NAME")
 
 	// Configure various service clients
 	textractClient := textract.New(session)

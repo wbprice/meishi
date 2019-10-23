@@ -7,9 +7,9 @@ plugins:
 
 custom:
   dynamodbTableName: "meishi-${self:provider.stage}-business-card-table"
-  businessCardS3BucketName: "meishi-${self:provider.stage}-business-card-upload-bucket"
-  trainingDataInputS3BucketName: "meishi-${self:provider.stage}-training-data-input-bucket"
-  trainingDataOutputS3BucketName: "meishi-${self:provider.stage}-training-data-output-bucket"
+  businessCardImageS3BucketName: "meishi-${self:provider.stage}-business-card-upload-bucket"
+  businessCardTextS3BucketName: "meishi-${self:provider.stage}-business-card-text-bucket"
+  trainingDataS3BucketName: "meishi-${self:provider.stage}-training-data-bucket"
   trainingDataIAMRoleName: "meishi-${self:provider.stage}-training-data-iam-role"
   trainingDataIAMPolicyName: "meishi-${self:provider.stage}-training-data-iam-role"
 
@@ -43,7 +43,8 @@ provider:
         - arn:aws:s3:::${self:custom.businessCardS3BucketName}
         - arn:aws:s3:::${self:custom.businessCardS3BucketName}/*
   environment:
-    S3_BUCKET_NAME: ${self:custom.businessCardS3BucketName}
+    BUSINESS_CARD_IMAGE_S3_BUCKET_NAME: ${self:custom.businessCardImageS3BucketName}
+    BUSINESS_CARD_TEXT_S3_BUCKET_NAME: ${self:custom.businessCardTextS3BucketName}
     DYNAMODB_TABLE_NAME: ${self:custom.dynamodbTableName}
 
 package:
@@ -58,6 +59,13 @@ functions:
     events:
       - s3:
           bucket: ${self:custom.businessCardS3BucketName}
+          event: s3:ObjectCreated:*
+
+  interpret-business-card:
+    handler: bin/interpret-business-card
+    events:
+      - s3:
+          bucket: ${self:custom.businessCardTextS3BucketName}
           event: s3:ObjectCreated:*
 
 resources:
@@ -111,12 +119,7 @@ resources:
                   Resource:
                     - arn:aws:s3:::${self:custom.trainingDataOutputS3BucketName}/*
 
-    TrainingDataBucketInput:
+    TrainingDataBucket:
       Type: AWS::S3::Bucket
       Properties:
         BucketName: ${self:custom.trainingDataInputS3BucketName}
-
-    TrainingDataBucketOutput:
-      Type: AWS::S3::Bucket
-      Properties:
-        BucketName: ${self:custom.trainingDataOutputS3BucketName}
